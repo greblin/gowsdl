@@ -23,6 +23,7 @@ type XSDSchema struct {
 	Imports            []*XSDImport      `xml:"import"`
 	Elements           []*XSDElement     `xml:"element"`
 	Attributes         []*XSDAttribute   `xml:"attribute"`
+	AttributeGroups    []*XSDAttributeGroup `xml:"attributeGroup"`
 	ComplexTypes       []*XSDComplexType `xml:"complexType"` //global
 	SimpleType         []*XSDSimpleType  `xml:"simpleType"`
 }
@@ -86,6 +87,12 @@ Loop:
 					return err
 				}
 				s.Attributes = append(s.Attributes, x)
+			case "attributeGroup":
+				x := new(XSDAttributeGroup)
+				if err := d.DecodeElement(x, &t); err != nil {
+					return err
+				}
+				s.AttributeGroups = append(s.AttributeGroups, x)
 			case "complexType":
 				x := new(XSDComplexType)
 				if err := d.DecodeElement(x, &t); err != nil {
@@ -150,6 +157,7 @@ type XSDComplexType struct {
 	ComplexContent XSDComplexContent `xml:"complexContent"`
 	SimpleContent  XSDSimpleContent  `xml:"simpleContent"`
 	Attributes     []*XSDAttribute   `xml:"attribute"`
+	AttributeGroups []*XSDAttributeGroup `xml:"attributeGroup"`
 }
 
 // XSDGroup element is used to define a group of elements to be used in complex type definitions.
@@ -181,6 +189,14 @@ type XSDExtension struct {
 	Base       string          `xml:"base,attr"`
 	Attributes []*XSDAttribute `xml:"attribute"`
 	Sequence   []XSDElement    `xml:"sequence>element"`
+	SequenceChoice []*XSDElement     `xml:"sequence>choice>element"`
+}
+
+type XSDAttributeGroup struct {
+	Doc        string          `xml:"annotation>documentation"`
+	Name       string          `xml:"name,attr"`
+	Ref        string          `xml:"ref,attr"`
+	Attributes []*XSDAttribute `xml:"attribute"`
 }
 
 // XSDAttribute represent an element attribute. Simple elements cannot have

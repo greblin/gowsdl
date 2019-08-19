@@ -36,7 +36,14 @@ var typesTmpl = `
 	{{end}}
 
 	{{template "Elements" .Extension.Sequence}}
+	{{template "Elements" .Extension.SequenceChoice}}
 	{{template "Attributes" .Extension.Attributes}}
+{{end}}
+
+{{define "AttributeGroups"}}
+	{{range .}}
+		{{template "Attributes" .Attributes}}
+	{{end}}
 {{end}}
 
 {{define "Attributes"}}
@@ -67,6 +74,7 @@ var typesTmpl = `
 			{{template "Elements" .SequenceChoice}}
 			{{template "Elements" .All}}
 			{{template "Attributes" .Attributes}}
+			{{template "AttributeGroups" .AttributeGroups}}
 		{{end}}
 	{{end}}
 	} ` + "`" + `xml:"{{.Name}},omitempty"` + "`" + `
@@ -75,7 +83,7 @@ var typesTmpl = `
 {{define "Elements"}}
 	{{range .}}
 		{{if ne .Ref ""}}
-			{{removeNS .Ref | replaceReservedWords  | makePublic}} {{if eq .MaxOccurs "unbounded"}}[]{{end}}{{.Ref | toGoType}} ` + "`" + `xml:"{{.Ref | removeNS}},omitempty"` + "`" + `
+			{{removeNS .Ref | replaceReservedWords  | makePublic}} {{if or (eq .MaxOccurs "unbounded") (gt .MaxOccurs "1")}}[]{{end}}{{.Ref | toGoType}} ` + "`" + `xml:"{{.Ref | removeNS}},omitempty"` + "`" + `
 		{{else}}
 		{{if not .Type}}
 			{{if .SimpleType}}
@@ -119,6 +127,7 @@ var typesTmpl = `
 						{{template "Elements" .SequenceChoice}}
 						{{template "Elements" .All}}
 						{{template "Attributes" .Attributes}}
+						{{template "AttributeGroups" .AttributeGroups}}
 					{{end}}
 				}
 			{{end}}
@@ -145,6 +154,7 @@ var typesTmpl = `
 				{{template "Elements" .SequenceChoice}}
 				{{template "Elements" .All}}
 				{{template "Attributes" .Attributes}}
+				{{template "AttributeGroups" .AttributeGroups}}
 			{{end}}
 		}
 	{{end}}

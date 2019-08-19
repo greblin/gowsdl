@@ -52,9 +52,41 @@ func (t *traverser) traverseComplexType(ct *XSDComplexType) {
 	t.traverseElements(ct.Choice)
 	t.traverseElements(ct.SequenceChoice)
 	t.traverseElements(ct.All)
+	t.traverseAttributeGroups(ct.AttributeGroups)
 	t.traverseAttributes(ct.Attributes)
 	t.traverseAttributes(ct.ComplexContent.Extension.Attributes)
 	t.traverseAttributes(ct.SimpleContent.Extension.Attributes)
+}
+
+func (t *traverser) traverseAttributeGroups(groups []*XSDAttributeGroup) {
+	for _, group := range groups {
+		t.traverseAttributeGroup(group)
+	}
+}
+
+func (t *traverser) traverseAttributeGroup(group *XSDAttributeGroup) {
+	if group.Ref != "" {
+		refGroup := t.getGlobalAttributeGroup(group.Ref)
+		if refGroup != nil && refGroup.Ref == "" {
+			t.traverseAttributeGroup(refGroup)
+			group.Name = refGroup.Name
+			group.Attributes = refGroup.Attributes
+		}
+	}
+}
+
+func (t *traverser) getGlobalAttributeGroup(name string) *XSDAttributeGroup {
+	ref := t.qname(name)
+	for _, schema := range t.all {
+		if schema.TargetNamespace == ref.Space {
+			for _, group := range schema.AttributeGroups {
+				if group.Name == ref.Local {
+					return group
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func (t *traverser) traverseAttributes(attrs []*XSDAttribute) {
@@ -103,6 +135,7 @@ func (t *traverser) qname(name string) (qname xml.Name) {
 	x := strings.SplitN(name, ":", 2)
 	if len(x) == 1 {
 		qname.Local = x[0]
+		qname.Space = t.c.TargetNamespace
 	} else {
 		qname.Local = x[1]
 		qname.Space = x[0]
